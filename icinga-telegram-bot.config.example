@@ -1,0 +1,12 @@
+[telegram]
+token = "example:token"
+
+[security]
+allowed_chat_ids = [1234567890]
+commands_only_administrators = true
+
+[icinga]
+api_url = https://icinga_url:5665
+api_user = Icinga API Username
+api_pass = Icinga API Password
+api_ca = path to ca

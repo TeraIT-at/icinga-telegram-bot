@@ -1,0 +1,21 @@
+[Unit]
+Description=Icinga Telegram Bot
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=nobody
+Group=nobody
+PIDFile=/var/tmp/icinga-telegram-bot.pid
+WorkingDirectory=/opt/icinga-telegram-bot/
+ExecStart=/opt/icinga-telegram-bot/venv/bin/python -m icingatelegrambot.app --config_file=icinga-telegram-bot.config
+StandardOutput=syslog
+StandardError=syslog
+SyslogIdentifier=icinga-telegram-bot
+RemainAfterExit=no
+Restart=on-failure
+RestartSec=30
+
+[Install]
+WantedBy=multi-user.target
