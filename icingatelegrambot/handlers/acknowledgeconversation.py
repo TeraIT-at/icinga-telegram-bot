@@ -20,16 +20,14 @@ logger = logging.getLogger(__name__)
 class AcknowledgeConversationHandler(Icinga2TelegramBotHandler, ConversationHandler):
     class Stages(Enum):
         HOST_INPUT_COMMENT = 10
-        HOST_FINISH = 11
         SERVICE_INPUT_COMMENT = 20
-        SERVICE_FINISH = 21
 
     MESSAGE_NO_HOSTNAME_FOUND = "Sorry, i couldn\'t find a hostname from your message."
     MESSAGE_NO_SERVICENAME_FOUND = "Sorry, i couldn\'t find a servicename from the message."
     MESSAGE_ACKNOWLEDGE_HOST_RESPONSE = 'You are about to acknowledge the host problem on \nHost: {hostname} \nPlease reply with your comment:\n'
     MESSAGE_ACKNOWLEDGE_HOST_SERVICE_RESPONSE = 'You are about to acknowledge the service problem of\nService: {servicename}\non \nHost: {hostname}\nPlease reply with your comment:\n'
     MESSAGE_ALREADY_FINISHED = "This was already acknowledged!"
-    MESSAGE_UNKNOWN = "Sorry I didn't understand this."
+    MESSAGE_FALLBACK = "Sorry, this acknowledgement is no longer valid or already finished."
 
     def __init__(self, security_manager, api_client):
         Icinga2TelegramBotHandler.__init__(self, security_manager, api_client)
@@ -40,12 +38,8 @@ class AcknowledgeConversationHandler(Icinga2TelegramBotHandler, ConversationHand
             states={
                 self.Stages.HOST_INPUT_COMMENT: [MessageHandler(Filters.text, self.acknowledge_host_finish)
                                                  ],
-                self.Stages.HOST_FINISH: [MessageHandler(Filters.text, self.already_finished)
-                                          ],
                 self.Stages.SERVICE_INPUT_COMMENT: [MessageHandler(Filters.text, self.acknowledge_service_finish)
                                                     ],
-                self.Stages.SERVICE_FINISH: [MessageHandler(Filters.text, self.already_finished)
-                                             ],
             },
 
             fallbacks=[MessageHandler(Filters.text, self.fallback)]
@@ -61,12 +55,16 @@ class AcknowledgeConversationHandler(Icinga2TelegramBotHandler, ConversationHand
 
         context.bot.answer_callback_query(update.callback_query.id)
         update.callback_query.message.reply_text(self.MESSAGE_ACKNOWLEDGE_HOST_RESPONSE.format(hostname=hostname))
+        context.user_data["ackknowledge_hostname"] = hostname
 
         return self.Stages.HOST_INPUT_COMMENT
 
     @SecurityManager.check_message_permission
     def acknowledge_host_finish(self, update: Update, context: CallbackContext):
-        hostname = NotificationParser.findHostnameFromNotification(update.message.reply_to_message.text)
+        if update.message.reply_to_message is not None:
+            hostname = NotificationParser.findHostnameFromNotification(update.message.reply_to_message.text)
+        else:
+            hostname = context.user_data["ackknowledge_hostname"]
 
         if (hostname is None):
             update.callback_query.message.reply_text(self.MESSAGE_NO_HOSTNAME_FOUND)
@@ -77,7 +75,9 @@ class AcknowledgeConversationHandler(Icinga2TelegramBotHandler, ConversationHand
                                                                  update.message.text, notify=True)
 
         update.message.reply_text(ResultPrinter.printResultsFromResponse(api_result))
-        return self.Stages.HOST_FINISH
+        context.user_data["ackknowledge_hostname"] = None
+        context.user_data["ackknowledge_servicename"] = None
+        return ConversationHandler.END
 
     @SecurityManager.check_message_permission
     def acknowledge_service_start(self, update: Update, context: CallbackContext):
@@ -94,13 +94,20 @@ class AcknowledgeConversationHandler(Icinga2TelegramBotHandler, ConversationHand
 
         context.bot.answer_callback_query(update.callback_query.id)
         update.callback_query.message.reply_text(self.MESSAGE_ACKNOWLEDGE_HOST_SERVICE_RESPONSE.format(hostname=hostname,servicename=servicename))
+        context.user_data["ackknowledge_in_progress"] = True
+        context.user_data["ackknowledge_hostname"] = hostname
+        context.user_data["ackknowledge_servicename"] = servicename
 
         return self.Stages.SERVICE_INPUT_COMMENT
 
     @SecurityManager.check_message_permission
     def acknowledge_service_finish(self, update: Update, context: CallbackContext):
-        hostname, servicename = NotificationParser.findHostnameAndServicenameFromNotification(
-            update.message.reply_to_message.text)
+        if update.message.reply_to_message is not None:
+            hostname, servicename = NotificationParser.findHostnameAndServicenameFromNotification(
+                update.message.reply_to_message.text)
+        else:
+            hostname = context.user_data["ackknowledge_hostname"]
+            servicename = context.user_data["ackknowledge_servicename"]
 
         if (servicename is None):
             update.callback_query.message.reply_text(self.MESSAGE_NO_SERVICENAME_FOUND)
@@ -116,10 +123,12 @@ class AcknowledgeConversationHandler(Icinga2TelegramBotHandler, ConversationHand
                                                                  update.message.text, notify=True)
 
         update.message.reply_text(ResultPrinter.printResultsFromResponse(api_result))
-        return self.Stages.SERVICE_FINISH
-
-    def already_finished(self, update: Update, context: CallbackContext):
-        update.message.reply_text(self.MESSAGE_ALREADY_FINISHED)
+        context.user_data["ackknowledge_hostname"] = None
+        context.user_data["ackknowledge_servicename"] = None
+        return ConversationHandler.END
 
     def fallback(self, update: Update, context: CallbackContext):
-        update.message.reply_text(self.MESSAGE_UNKNOWN)
+        if(update.message.reply_to_message is None):
+            context.bot.send_message(update.effective_chat.id,self.MESSAGE_FALLBACK)
+        else:
+            update.message.reply_text(self.MESSAGE_FALLBACK)
