@@ -1,5 +1,8 @@
 import argparse
 import logging
+import traceback
+from pprint import pprint
+
 from telegram import Update
 from telegram.ext import Updater, CommandHandler
 from telegram.ext.callbackcontext import CallbackContext
@@ -40,7 +43,7 @@ class Icinga2TelegramBot():
         dp = updater.dispatcher
 
         # Add single Command handlers
-        dp.add_handler(CommandHandler("help", help))
+        dp.add_handler(CommandHandler("help", self.help))
 
         # Add external handlers
         Icinga2TelegramBotHandler.registerHandlerAtDispatcher(
@@ -68,7 +71,8 @@ class Icinga2TelegramBot():
             if (update.callback_query):
                 context.bot.answer_callback_query(update.callback_query.id, response)
 
-            logger.warning('Update "%s" caused error "%s"', update, context.error)
+            logger.warning('Update "%s" \ncaused error \n"%s"', update, context.error)
+            logger.debug(traceback.print_tb(context.error.__traceback__))
             return
         else:
             response = self.MESSAGE_ERROR
@@ -79,4 +83,5 @@ class Icinga2TelegramBot():
                 context.bot.answer_callback_query(update.callback_query.id, response)
 
             if (update and context.error):
-                logger.error('Update "%s" caused error "%s"', update, context.error)
+                logger.warning('Update "%s" \ncaused error \n"%s"', update, context.error)
+                logger.debug(traceback.print_tb(context.error.__traceback__))

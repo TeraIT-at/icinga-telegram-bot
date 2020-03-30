@@ -1,9 +1,11 @@
 import json
+import logging
 
 from icingatelegrambot.tool.config import ConfigFile
 from telegram.update import Update
 from telegram.ext.callbackcontext import CallbackContext
 
+logger = logging.getLogger(__name__)
 
 class SecurityManager():
     configfile = None  # type: ConfigFile
@@ -20,6 +22,7 @@ class SecurityManager():
 
     def check_chat_id(self, chat_id):
         if (chat_id not in self.allowed_chat_ids):
+            logger.warning('Chat ID "%s" is not allowed.', chat_id)
             return False
 
         return True

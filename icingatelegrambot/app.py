@@ -1,4 +1,6 @@
 import argparse
+import logging
+
 from icingatelegrambot.bot import Icinga2TelegramBot
 
 self_description = """This is an Icinga2 Telegram bot.
@@ -26,5 +28,8 @@ if __name__ == '__main__':
     parser.add_argument("--config_file", type=argparse.FileType("r"), default="icinga-telegram-bot.config", help="""points to the config file to read config data from
                         which is not installed under the default path
                         './icinga-telegram-bot.config'")""")
+    parser.add_argument(
+            "--log-level",default=logging.INFO,type=lambda x: getattr(logging, x),help="Configure the logging level.")
     args = parser.parse_args()
+    logging.basicConfig(level=args.log_level)
     main(args)
