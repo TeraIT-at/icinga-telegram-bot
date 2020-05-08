@@ -5,7 +5,7 @@ Click==7.0
 cryptography==2.8
 decorator==4.4.1
 future==0.18.2
-icinga2apic==0.7.1
+icinga2apic==0.7.3
 idna==2.8
 pycparser==2.19
 python-telegram-bot==12.4.2
