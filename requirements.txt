@@ -9,7 +9,7 @@ icinga2apic==0.7.3
 idna==2.8
 pycparser==2.19
 python-telegram-bot==12.4.2
-PyYAML==5.3
+PyYAML==5.4
 requests==2.22.0
 simplejson==3.17.0
 six==1.14.0
