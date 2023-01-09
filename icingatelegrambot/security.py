@@ -1,5 +1,6 @@
 import json
 import logging
+import sys
 
 from icingatelegrambot.tool.config import ConfigFile
 from telegram.update import Update
