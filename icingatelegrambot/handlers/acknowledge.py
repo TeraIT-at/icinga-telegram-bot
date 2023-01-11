@@ -50,8 +50,11 @@ class AcknowledgeHandler(Icinga2TelegramBotHandler):
             update.callback_query.message.reply_text(self.MESSAGE_NO_HOSTNAME_FOUND)
             return
 
+
+        author = update.effective_user.name if update.effective_user else "Unknown User"
+
         api_result = self.api_client.actions.acknowledge_problem("Host", 'host.name == "' + hostname + '"',
-                                                                 "Icinga Telegram Bot",
+                                                                 author + " via Icinga Telegram Bot",
                                                                  "Quick Acknowledge", notify=True)
 
         context.bot.answer_callback_query(update.callback_query.id)
@@ -90,9 +93,11 @@ class AcknowledgeHandler(Icinga2TelegramBotHandler):
             update.callback_query.message.reply_text(self.MESSAGE_NO_HOSTNAME_FOUND)
             return
 
+        author = update.effective_user.name if update.effective_user else "Unknown User"
+
         api_result = self.api_client.actions.acknowledge_problem("Service",
                                                                  'host.name == "' + hostname + '" && service.name == "' + servicename + '"',
-                                                                 "Icinga Telegram Bot",
+                                                                 author + " via Icinga Telegram Bot",
                                                                  "Quick Acknowledge", notify=True)
 
         context.bot.answer_callback_query(update.callback_query.id)
