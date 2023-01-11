@@ -24,7 +24,7 @@ class AcknowledgeConversationHandler(Icinga2TelegramBotHandler, ConversationHand
 
     MESSAGE_NO_HOSTNAME_FOUND = "Sorry, i couldn\'t find a hostname from your message."
     MESSAGE_NO_SERVICENAME_FOUND = "Sorry, i couldn\'t find a servicename from the message."
-    MESSAGE_ACKNOWLEDGE_HOST_RESPONSE = 'You are about to acknowledge the host problem on \nHost: {hostname} \nPlease reply with your comment:\n'
+    MESSAGE_ACKNOWLEDGE_HOST_RESPONSE = 'You are about to acknowledge the host problem on \nHost: {hostname}\nPlease reply with your comment:\n'
     MESSAGE_ACKNOWLEDGE_HOST_SERVICE_RESPONSE = 'You are about to acknowledge the service problem of\nService: {servicename}\non \nHost: {hostname}\nPlease reply with your comment:\n'
     MESSAGE_ALREADY_FINISHED = "This was already acknowledged!"
     MESSAGE_FALLBACK = "Sorry, this acknowledgement is no longer valid or already finished."
