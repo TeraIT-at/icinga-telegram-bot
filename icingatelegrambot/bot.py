@@ -9,6 +9,7 @@ from telegram.ext.callbackcontext import CallbackContext
 from icinga2apic.client import Client as Icinga2ApiClient
 from icinga2apic.exceptions import Icinga2ApiRequestException
 from icingatelegrambot.handlers.acknowledge import AcknowledgeHandler
+from icingatelegrambot.handlers.downtime import DowntimeHandler
 from icingatelegrambot.handlers.handler import Icinga2TelegramBotHandler
 from icingatelegrambot.handlers.notification import NotificationHandler
 from icingatelegrambot.security import SecurityManager
@@ -50,6 +51,8 @@ class Icinga2TelegramBot():
             AcknowledgeHandler(self.security_manager, self.api_client), dp)
         Icinga2TelegramBotHandler.registerHandlerAtDispatcher(
             NotificationHandler(self.security_manager, self.api_client), dp)
+        Icinga2TelegramBotHandler.registerHandlerAtDispatcher(
+            DowntimeHandler(self.security_manager, self.api_client), dp)
 
         dp.add_error_handler(self.error)
 

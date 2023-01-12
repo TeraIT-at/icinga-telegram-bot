@@ -84,6 +84,19 @@ These functions are currently implemented:
     * (Host|Service) specifies if you want to send a notification to a host or a service (e.g. Host)
     * (Hostname) specifies the hostname (e.g. my-hostname)
     * (Servicename) specifies the servicename (e.g. my-servicename) - only specify when first argument is Service
+
+* ```/schedule_downtime (Host|Service);(Hostname);(Servicename);(Comment);(Start time);(End time);(Fixed);(Duration);(All services);(Trigger name);(Child options)```
+    * (Host|Service)* specifies if you want to send a notification to a host or a service (e.g. Host)
+    * (Hostname)* specifies the hostname (e.g. my-hostname)
+    * (Servicename) specifies the servicename (e.g. my-servicename) - only specify when first argument is Service
+    * (Comment)*: comment that for the downtime (usually why this downtime will happen) 
+    * (Start time)*: start time (e.g. ```01.01.1970 03:00``` or ```now``` or ```In 2 hours```)
+    * (End time)*: see (Start time)
+    * (Fixed): if this schedule is fixed or flexible downtime (```true``` or ```false```, ```y```,```n```); defaults to ```false```
+    * (Duration)**: duration of downtime in seconds (required if ```fixed``` is ```false```)
+    * (All services): if this is set to true it sets a downtime for all services on the matched host (```true``` or ```false```, ```y```,```n```); defaults to ```false```
+    * (Trigger name): sets a trigger for a triggered downtime (see [Icinga docs](https://icinga.com/docs/icinga-2/latest/doc/08-advanced-topics/#downtimes))
+    * (Child options): if and how to schedule child downtimes (```no```, ```triggeredChildren```,```nonTriggeredhildren```) (see [Icinga docs](https://icinga.com/docs/icinga-2/latest/doc/08-advanced-topics/#downtimes))
     
  * Notifications
   
@@ -108,5 +121,4 @@ These functions are currently implemented:
  ## Todo
  * Implement User ACL (registration, permissions, ...)
  * Commands for querying Hosts / Services
- * Commands for scheduling downtimes
  * Icinga Status Check (check Icinga 2application status regularly and notify about errors)
