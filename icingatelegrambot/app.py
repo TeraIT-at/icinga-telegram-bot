@@ -1,6 +1,7 @@
 import argparse
 import logging
 
+from icingatelegrambot import __version__, __version_date__
 from icingatelegrambot.bot import Icinga2TelegramBot
 
 self_description = """This is an Icinga2 Telegram bot.
@@ -9,8 +10,6 @@ It can be used to interact with Icinga2 from your Telegram client. It uses the
 Icinga2 API.
 """
 
-__version__ = "0.1.0"
-__version_date__ = "2020-02-26"
 __author__ = "Christian Jonak-Möchel <christian@jonak.org>"
 __description__ = "Icinga2 Telegram Bot"
 __license__ = "Apache"
@@ -21,7 +20,7 @@ def main(args):
     bot = Icinga2TelegramBot(args)
 
 
-if __name__ == '__main__':
+def run():
     description = "%s\nVersion: %s (%s)" % (self_description, __version__, __version_date__)
 
     parser = argparse.ArgumentParser(description=description)
@@ -33,3 +32,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
     logging.basicConfig(level=args.log_level)
     main(args)
+
+
+if __name__ == '__main__':
+    run()

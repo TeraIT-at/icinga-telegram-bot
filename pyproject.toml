@@ -1,0 +1,43 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "icinga-telegram-bot"
+description = "Send notifications and acknowledgments via Telegram to Icinga2 via the API."
+readme = "README.md"
+license = { text = "Apache-2.0" }
+authors = [{ name = "Christian Jonak-Möchel", email = "christian@jonak.org" }]
+# python-telegram-bot 13.x relies on the stdlib `imghdr` module, which was
+# removed in Python 3.13 -- so the supported range is capped below 3.13.
+requires-python = ">=3.8,<3.13"
+dynamic = ["version"]
+dependencies = [
+    "dateparser==1.1.6",
+    "icinga2apic==0.7.5",
+    "python-telegram-bot==13.15",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest~=9.0.3",
+    "pytest-mock==3.10.0",
+    "mock==5.0.1",
+]
+
+[project.urls]
+Homepage = "https://github.com/joni1993/icinga-telegram-bot"
+
+[project.scripts]
+icinga-telegram-bot = "icingatelegrambot.app:run"
+
+[tool.setuptools.dynamic]
+version = { attr = "icingatelegrambot.__version__" }
+
+[tool.setuptools.packages.find]
+include = ["icingatelegrambot*"]
+exclude = ["icingatelegrambot.tests*"]
+
+[tool.pytest.ini_options]
+testpaths = ["icingatelegrambot/tests"]
+python_files = ["test_*.py", "*Test.py"]
