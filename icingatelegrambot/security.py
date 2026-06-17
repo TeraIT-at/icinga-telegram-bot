@@ -3,8 +3,8 @@ import logging
 import sys
 
 from icingatelegrambot.tool.config import ConfigFile
-from telegram.update import Update
-from telegram.ext.callbackcontext import CallbackContext
+from telegram import Update
+from telegram.ext import CallbackContext
 
 logger = logging.getLogger(__name__)
 
@@ -28,15 +28,15 @@ class SecurityManager():
 
         return True
 
-    def check_message_is_user_administrator(self, update: Update, context: CallbackContext):
+    async def check_message_is_user_administrator(self, update: Update, context: CallbackContext):
         chat_id = update.effective_chat.id
         user_id = update.effective_user.id
 
         # Always true in private chats
-        if context.bot.get_chat(chat_id).type == "private":
+        if (await context.bot.get_chat(chat_id)).type == "private":
             return True
 
-        admins = context.bot.get_chat_administrators(chat_id)
+        admins = await context.bot.get_chat_administrators(chat_id)
 
         for admin in admins:
             if admin.user.id == user_id:
@@ -45,17 +45,17 @@ class SecurityManager():
 
     @staticmethod
     def check_message_permission(func):
-        def check(caller_class, update: Update,context: CallbackContext, *args,**kwargs):
+        async def check(caller_class, update: Update,context: CallbackContext, *args,**kwargs):
             security_manager = caller_class.security_manager # type: SecurityManager
 
             if(security_manager is None):
                 return False
 
             if (security_manager.check_chat_id(update.effective_message.chat.id) is False):
-                update.message.reply_text(SecurityManager.MESSAGE_CHAT_NOT_ALLOWED)
+                await update.message.reply_text(SecurityManager.MESSAGE_CHAT_NOT_ALLOWED)
                 return False
-            if (security_manager.commands_only_administrators and (security_manager.check_message_is_user_administrator(update,context) is False)):
-                update.message.reply_text(SecurityManager.MESSAGE_ONLY_ADMINS)
+            if (security_manager.commands_only_administrators and (await security_manager.check_message_is_user_administrator(update,context) is False)):
+                await update.message.reply_text(SecurityManager.MESSAGE_ONLY_ADMINS)
                 return False
-            return func(caller_class, update, context, *args, **kwargs)
+            return await func(caller_class, update, context, *args, **kwargs)
         return check

@@ -4,8 +4,7 @@ import traceback
 from pprint import pprint
 
 from telegram import Update
-from telegram.ext import Updater, CommandHandler
-from telegram.ext.callbackcontext import CallbackContext
+from telegram.ext import Application, CommandHandler, CallbackContext
 from icinga2apic.client import Client as Icinga2ApiClient
 from icinga2apic.exceptions import Icinga2ApiRequestException
 from icingatelegrambot.handlers.acknowledge import AcknowledgeHandler
@@ -39,51 +38,48 @@ class Icinga2TelegramBot():
                                            self.configfile.configuration.get("icinga", "api_pass"),
                                            ca_certificate=self.configfile.configuration.get("icinga", "api_ca"))
 
-        updater = Updater(self.configfile.configuration.get("telegram", "token"), use_context=True)
-
-        dp = updater.dispatcher
+        application = Application.builder().token(
+            self.configfile.configuration.get("telegram", "token")).build()
 
         # Add single Command handlers
-        dp.add_handler(CommandHandler("help", self.help))
+        application.add_handler(CommandHandler("help", self.help))
 
         # Add external handlers
-        Icinga2TelegramBotHandler.registerHandlerAtDispatcher(
-            AcknowledgeHandler(self.security_manager, self.api_client), dp)
-        Icinga2TelegramBotHandler.registerHandlerAtDispatcher(
-            NotificationHandler(self.security_manager, self.api_client), dp)
-        Icinga2TelegramBotHandler.registerHandlerAtDispatcher(
-            DowntimeHandler(self.security_manager, self.api_client), dp)
+        Icinga2TelegramBotHandler.registerHandlerAtApplication(
+            AcknowledgeHandler(self.security_manager, self.api_client), application)
+        Icinga2TelegramBotHandler.registerHandlerAtApplication(
+            NotificationHandler(self.security_manager, self.api_client), application)
+        Icinga2TelegramBotHandler.registerHandlerAtApplication(
+            DowntimeHandler(self.security_manager, self.api_client), application)
 
-        dp.add_error_handler(self.error)
+        application.add_error_handler(self.error)
 
-        updater.start_polling()
+        application.run_polling()
 
-        updater.idle()
-
-    def help(self, update: Update, context: CallbackContext):
+    async def help(self, update: Update, context: CallbackContext):
         """Send a message when the command /help is issued."""
-        update.message.reply_text('Help!')
+        await update.message.reply_text('Help!')
 
-    def error(self, update: Update, context: CallbackContext):
+    async def error(self, update: Update, context: CallbackContext):
         if type(context.error) is Icinga2ApiRequestException:
             response = results.ResultPrinter.printResultsFromResponse(context.error.response)
             if(response == ""):
                 response = self.MESSAGE_NOT_SUCCESSFULL
-            if (update.message):
-                update.message.reply_text(response)
-            if (update.callback_query):
-                context.bot.answer_callback_query(update.callback_query.id, response)
+            if (isinstance(update, Update) and update.message):
+                await update.message.reply_text(response)
+            if (isinstance(update, Update) and update.callback_query):
+                await context.bot.answer_callback_query(update.callback_query.id, response)
 
             logger.warning('Update "%s" \ncaused error \n"%s"', update, context.error)
             logger.debug(traceback.print_tb(context.error.__traceback__))
             return
         else:
             response = self.MESSAGE_ERROR
-            if (update and update.message):
-                update.message.reply_text(response)
+            if (isinstance(update, Update) and update.message):
+                await update.message.reply_text(response)
 
-            if (update and update.callback_query):
-                context.bot.answer_callback_query(update.callback_query.id, response)
+            if (isinstance(update, Update) and update.callback_query):
+                await context.bot.answer_callback_query(update.callback_query.id, response)
 
             if (update and context.error):
                 logger.warning('Update "%s" \ncaused error \n"%s"', update, context.error)

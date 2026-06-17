@@ -4,7 +4,7 @@ from enum import Enum
 from icinga2apic.exceptions import Icinga2ApiRequestException
 from telegram import Update
 from telegram.ext import CallbackContext, ConversationHandler, MessageHandler, CallbackQueryHandler, \
-    Filters
+    filters
 
 from icingatelegrambot.handlers.handler import Icinga2TelegramBotHandler
 from icingatelegrambot.security import SecurityManager
@@ -36,38 +36,38 @@ class AcknowledgeConversationHandler(Icinga2TelegramBotHandler, ConversationHand
                           CallbackQueryHandler(self.acknowledge_service_start, pattern="^ack_service$")],
 
             states={
-                self.Stages.HOST_INPUT_COMMENT: [MessageHandler(Filters.text, self.acknowledge_host_finish)
+                self.Stages.HOST_INPUT_COMMENT: [MessageHandler(filters.TEXT, self.acknowledge_host_finish)
                                                  ],
-                self.Stages.SERVICE_INPUT_COMMENT: [MessageHandler(Filters.text, self.acknowledge_service_finish)
+                self.Stages.SERVICE_INPUT_COMMENT: [MessageHandler(filters.TEXT, self.acknowledge_service_finish)
                                                     ],
             },
 
-            fallbacks=[MessageHandler(Filters.text, self.fallback)]
+            fallbacks=[MessageHandler(filters.TEXT, self.fallback)]
         )
 
     @SecurityManager.check_message_permission
-    def acknowledge_host_start(self, update: Update, context: CallbackContext):
+    async def acknowledge_host_start(self, update: Update, context: CallbackContext):
         hostname = NotificationParser.findHostnameFromNotification(update.callback_query.message.text)
 
         if (hostname is None):
-            update.callback_query.message.reply_text(self.MESSAGE_NO_HOSTNAME_FOUND)
+            await update.callback_query.message.reply_text(self.MESSAGE_NO_HOSTNAME_FOUND)
             return
 
-        context.bot.answer_callback_query(update.callback_query.id)
-        update.callback_query.message.reply_text(self.MESSAGE_ACKNOWLEDGE_HOST_RESPONSE.format(hostname=hostname))
+        await context.bot.answer_callback_query(update.callback_query.id)
+        await update.callback_query.message.reply_text(self.MESSAGE_ACKNOWLEDGE_HOST_RESPONSE.format(hostname=hostname))
         context.user_data["ackknowledge_hostname"] = hostname
 
         return self.Stages.HOST_INPUT_COMMENT
 
     @SecurityManager.check_message_permission
-    def acknowledge_host_finish(self, update: Update, context: CallbackContext):
+    async def acknowledge_host_finish(self, update: Update, context: CallbackContext):
         if update.message.reply_to_message is not None:
             hostname = NotificationParser.findHostnameFromNotification(update.message.reply_to_message.text)
         else:
             hostname = context.user_data["ackknowledge_hostname"]
 
         if (hostname is None):
-            update.callback_query.message.reply_text(self.MESSAGE_NO_HOSTNAME_FOUND)
+            await update.callback_query.message.reply_text(self.MESSAGE_NO_HOSTNAME_FOUND)
             return
 
         author = update.effective_user.name if update.effective_user else "Unknown User"
@@ -76,26 +76,26 @@ class AcknowledgeConversationHandler(Icinga2TelegramBotHandler, ConversationHand
                                                                  author + " via Icinga Telegram Bot",
                                                                  update.message.text, notify=True)
 
-        update.message.reply_text(ResultPrinter.printResultsFromResponse(api_result))
+        await update.message.reply_text(ResultPrinter.printResultsFromResponse(api_result))
         context.user_data["ackknowledge_hostname"] = None
         context.user_data["ackknowledge_servicename"] = None
         return ConversationHandler.END
 
     @SecurityManager.check_message_permission
-    def acknowledge_service_start(self, update: Update, context: CallbackContext):
+    async def acknowledge_service_start(self, update: Update, context: CallbackContext):
         hostname, servicename = NotificationParser.findHostnameAndServicenameFromNotification(
             update.callback_query.message.text)
 
         if (servicename is None):
-            update.callback_query.message.reply_text(self.MESSAGE_NO_SERVICENAME_FOUND)
+            await update.callback_query.message.reply_text(self.MESSAGE_NO_SERVICENAME_FOUND)
             return
 
         if (hostname is None):
-            update.callback_query.message.reply_text(self.MESSAGE_NO_HOSTNAME_FOUND)
+            await update.callback_query.message.reply_text(self.MESSAGE_NO_HOSTNAME_FOUND)
             return
 
-        context.bot.answer_callback_query(update.callback_query.id)
-        update.callback_query.message.reply_text(self.MESSAGE_ACKNOWLEDGE_HOST_SERVICE_RESPONSE.format(hostname=hostname,servicename=servicename))
+        await context.bot.answer_callback_query(update.callback_query.id)
+        await update.callback_query.message.reply_text(self.MESSAGE_ACKNOWLEDGE_HOST_SERVICE_RESPONSE.format(hostname=hostname,servicename=servicename))
         context.user_data["ackknowledge_in_progress"] = True
         context.user_data["ackknowledge_hostname"] = hostname
         context.user_data["ackknowledge_servicename"] = servicename
@@ -103,7 +103,7 @@ class AcknowledgeConversationHandler(Icinga2TelegramBotHandler, ConversationHand
         return self.Stages.SERVICE_INPUT_COMMENT
 
     @SecurityManager.check_message_permission
-    def acknowledge_service_finish(self, update: Update, context: CallbackContext):
+    async def acknowledge_service_finish(self, update: Update, context: CallbackContext):
         if update.message.reply_to_message is not None:
             hostname, servicename = NotificationParser.findHostnameAndServicenameFromNotification(
                 update.message.reply_to_message.text)
@@ -112,11 +112,11 @@ class AcknowledgeConversationHandler(Icinga2TelegramBotHandler, ConversationHand
             servicename = context.user_data["ackknowledge_servicename"]
 
         if (servicename is None):
-            update.callback_query.message.reply_text(self.MESSAGE_NO_SERVICENAME_FOUND)
+            await update.callback_query.message.reply_text(self.MESSAGE_NO_SERVICENAME_FOUND)
             return
 
         if (hostname is None):
-            update.callback_query.message.reply_text(self.MESSAGE_NO_HOSTNAME_FOUND)
+            await update.callback_query.message.reply_text(self.MESSAGE_NO_HOSTNAME_FOUND)
             return
 
         author = update.effective_user.name if update.effective_user else "Unknown User"
@@ -126,13 +126,13 @@ class AcknowledgeConversationHandler(Icinga2TelegramBotHandler, ConversationHand
                                                                  author + " via Icinga Telegram Bot",
                                                                  update.message.text, notify=True)
 
-        update.message.reply_text(ResultPrinter.printResultsFromResponse(api_result))
+        await update.message.reply_text(ResultPrinter.printResultsFromResponse(api_result))
         context.user_data["ackknowledge_hostname"] = None
         context.user_data["ackknowledge_servicename"] = None
         return ConversationHandler.END
 
-    def fallback(self, update: Update, context: CallbackContext):
+    async def fallback(self, update: Update, context: CallbackContext):
         if(update.message.reply_to_message is None):
-            context.bot.send_message(update.effective_chat.id,self.MESSAGE_FALLBACK)
+            await context.bot.send_message(update.effective_chat.id,self.MESSAGE_FALLBACK)
         else:
-            update.message.reply_text(self.MESSAGE_FALLBACK)
+            await update.message.reply_text(self.MESSAGE_FALLBACK)

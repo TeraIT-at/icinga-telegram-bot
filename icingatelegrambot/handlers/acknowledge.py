@@ -41,13 +41,13 @@ class AcknowledgeHandler(Icinga2TelegramBotHandler):
     Host specific function
     '''
     @SecurityManager.check_message_permission
-    def acknowledge_host_quick(self, update: Update, context: CallbackContext):
+    async def acknowledge_host_quick(self, update: Update, context: CallbackContext):
         ''' Handles the callback query for the quick acknowledge button sent from Icinga'''
 
         hostname = NotificationParser.findHostnameFromNotification(update.callback_query.message.text)
 
         if (hostname is None):
-            update.callback_query.message.reply_text(self.MESSAGE_NO_HOSTNAME_FOUND)
+            await update.callback_query.message.reply_text(self.MESSAGE_NO_HOSTNAME_FOUND)
             return
 
 
@@ -57,11 +57,11 @@ class AcknowledgeHandler(Icinga2TelegramBotHandler):
                                                                  author + " via Icinga Telegram Bot",
                                                                  "Quick Acknowledge", notify=True)
 
-        context.bot.answer_callback_query(update.callback_query.id)
-        update.callback_query.message.reply_text(ResultPrinter.printResultsFromResponse(api_result))
+        await context.bot.answer_callback_query(update.callback_query.id)
+        await update.callback_query.message.reply_text(ResultPrinter.printResultsFromResponse(api_result))
 
     @SecurityManager.check_message_permission
-    def remove_host_acknowledge(self, update: Update, context: CallbackContext):
+    async def remove_host_acknowledge(self, update: Update, context: CallbackContext):
         ''' Handles the callback query for the remove acknowledge button sent from Icinga'''
 
         hostname = NotificationParser.findHostnameFromNotification(update.callback_query.message.text)
@@ -71,26 +71,26 @@ class AcknowledgeHandler(Icinga2TelegramBotHandler):
 
         api_result = self.api_client.actions.remove_acknowledgement("Host", 'host.name == "' + hostname + '"')
 
-        context.bot.answer_callback_query(update.callback_query.id)
-        update.callback_query.message.reply_text(ResultPrinter.printResultsFromResponse(api_result))
+        await context.bot.answer_callback_query(update.callback_query.id)
+        await update.callback_query.message.reply_text(ResultPrinter.printResultsFromResponse(api_result))
 
     '''
     Service specific functions
     '''
 
     @SecurityManager.check_message_permission
-    def acknowledge_service_quick(self, update: Update, context: CallbackContext):
+    async def acknowledge_service_quick(self, update: Update, context: CallbackContext):
         hostname, servicename = NotificationParser.findHostnameAndServicenameFromNotification(
             update.callback_query.message.text)
 
         if (servicename is None):
-            context.bot.answer_callback_query(update.callback_query.id)
-            update.callback_query.message.reply_text(self.MESSAGE_NO_SERVICENAME_FOUND)
+            await context.bot.answer_callback_query(update.callback_query.id)
+            await update.callback_query.message.reply_text(self.MESSAGE_NO_SERVICENAME_FOUND)
             return
 
         if (hostname is None):
-            context.bot.answer_callback_query(update.callback_query.id)
-            update.callback_query.message.reply_text(self.MESSAGE_NO_HOSTNAME_FOUND)
+            await context.bot.answer_callback_query(update.callback_query.id)
+            await update.callback_query.message.reply_text(self.MESSAGE_NO_HOSTNAME_FOUND)
             return
 
         author = update.effective_user.name if update.effective_user else "Unknown User"
@@ -100,27 +100,27 @@ class AcknowledgeHandler(Icinga2TelegramBotHandler):
                                                                  author + " via Icinga Telegram Bot",
                                                                  "Quick Acknowledge", notify=True)
 
-        context.bot.answer_callback_query(update.callback_query.id)
-        update.callback_query.message.reply_text(ResultPrinter.printResultsFromResponse(api_result))
+        await context.bot.answer_callback_query(update.callback_query.id)
+        await update.callback_query.message.reply_text(ResultPrinter.printResultsFromResponse(api_result))
 
     @SecurityManager.check_message_permission
-    def remove_service_acknowledge(self, update: Update, context: CallbackContext):
+    async def remove_service_acknowledge(self, update: Update, context: CallbackContext):
         hostname, servicename = NotificationParser.findHostnameAndServicenameFromNotification(
             update.callback_query.message.text)
 
         if (servicename is None):
-            context.bot.answer_callback_query(update.callback_query.id)
-            update.callback_query.message.reply_text(self.MESSAGE_NO_SERVICENAME_FOUND)
+            await context.bot.answer_callback_query(update.callback_query.id)
+            await update.callback_query.message.reply_text(self.MESSAGE_NO_SERVICENAME_FOUND)
             return
 
         if (hostname is None):
-            context.bot.answer_callback_query(update.callback_query.id)
-            update.callback_query.message.reply_text(self.MESSAGE_NO_HOSTNAME_FOUND)
+            await context.bot.answer_callback_query(update.callback_query.id)
+            await update.callback_query.message.reply_text(self.MESSAGE_NO_HOSTNAME_FOUND)
             return
 
         api_result = self.api_client.actions.remove_acknowledgement("Service",
                                                                     'host.name == "' + hostname + '" && service.name == "' + servicename + '"')
 
-        context.bot.answer_callback_query(update.callback_query.id)
-        update.callback_query.message.reply_text(ResultPrinter.printResultsFromResponse(api_result))
+        await context.bot.answer_callback_query(update.callback_query.id)
+        await update.callback_query.message.reply_text(ResultPrinter.printResultsFromResponse(api_result))
 

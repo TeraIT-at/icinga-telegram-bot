@@ -17,28 +17,28 @@ class NotificationHandler(Icinga2TelegramBotHandler):
         self.handlers.append(self.send_notification_handler)
 
     @SecurityManager.check_message_permission
-    def send_notification(self, update: Update, context: CallbackContext):
+    async def send_notification(self, update: Update, context: CallbackContext):
         ''' /send_notification <Host|Service>;<Hostname>;<Servicename>;Text'''
-        def reply_usage(update:Update):
-            update.message.reply_text(NotificationHandler.MESSAGE_USAGE)
+        async def reply_usage(update:Update):
+            await update.message.reply_text(NotificationHandler.MESSAGE_USAGE)
 
         command = update.message.text.split(" ", 1)
 
         if(len(command) <= 1):
-            reply_usage(update)
+            await reply_usage(update)
             return
 
         command_parameters = command[1].split(";")
 
         if(len(command_parameters)<3):
-            reply_usage(update)
+            await reply_usage(update)
             return
 
         notification_type = command_parameters[0]
 
         if(notification_type != "Host" and notification_type != "Service"):
-            update.message.reply_text(self.MESSAGE_UNKNOWN_NOTIFICATION_TYPE.format(notification_type=notification_type))
-            reply_usage(update)
+            await update.message.reply_text(self.MESSAGE_UNKNOWN_NOTIFICATION_TYPE.format(notification_type=notification_type))
+            await reply_usage(update)
             return
 
         hostname = command_parameters[1]

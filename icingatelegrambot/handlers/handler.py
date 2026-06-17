@@ -1,5 +1,4 @@
-import telegram
-from telegram.ext import CallbackContext
+from telegram.ext import Application, CallbackContext
 
 class Icinga2TelegramBotHandler(object):
     api_client = None  # type: Icinga2ApiClient
@@ -12,10 +11,10 @@ class Icinga2TelegramBotHandler(object):
         self.api_client = api_client
 
     @staticmethod
-    def registerHandlerAtDispatcher(icinga2telegrambothandler, dispatcher: telegram.ext.Dispatcher):
+    def registerHandlerAtApplication(icinga2telegrambothandler, application: Application):
         """
 
         :type icinga2telegrambothandler: Icinga2TelegramBotHandler
         """
         for handler in icinga2telegrambothandler.handlers:
-            dispatcher.add_handler(handler)
+            application.add_handler(handler)

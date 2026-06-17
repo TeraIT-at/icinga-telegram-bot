@@ -18,13 +18,11 @@ def update(command):
         0,
         Message(
             0,
-            datetime.datetime.utcnow(),
+            datetime.datetime.now(datetime.timezone.utc),
             Chat(0, "private"),
             from_user=User(0, "Testuser", False),
             via_bot=User(0, "Testbot", True),
             sender_chat=Chat(0, "Channel"),
-            forward_from=User(0, "HAL9000", False),
-            forward_from_chat=Chat(0, "Channel"),
             text=command
         ),
     )

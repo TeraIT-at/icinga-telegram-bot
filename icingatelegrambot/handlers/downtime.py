@@ -33,15 +33,15 @@ class DowntimeHandler(Icinga2TelegramBotHandler):
 
         self.handlers.append(self.schedule_downtime_handler)
 
-    def usage(self,additional="",update: Update=None):
+    def usage(self,additional=""):
         text = additional+"\n"+DowntimeHandler.MESSAGE_USAGE if additional else DowntimeHandler.MESSAGE_USAGE
-        if(update):
-            update.message.reply_text(text)
         return text
 
     @SecurityManager.check_message_permission
-    def handle_schedule_downtime_command(self, update: Update, context: CallbackContext):
-        self.handle_schedule_downtime(update,context)
+    async def handle_schedule_downtime_command(self, update: Update, context: CallbackContext):
+        response = self.handle_schedule_downtime(update, context)
+        if response:
+            await update.message.reply_text(response)
 
     def handle_schedule_downtime(self, update: Update, context: CallbackContext):
         ''' /schedule_downtime (Host|Service);(Hostname);(Servicename);(Comment);(Start time);(End time);(Fixed);
@@ -50,7 +50,7 @@ class DowntimeHandler(Icinga2TelegramBotHandler):
         command = update.message.text.split(" ", 1)
 
         if (len(command) <= 1):
-            return self.usage(update=update)
+            return self.usage()
 
         command_parameters = command[1].split(";")
         host_service = Util.safe_list_access(command_parameters, 0)
@@ -66,25 +66,25 @@ class DowntimeHandler(Icinga2TelegramBotHandler):
         child_options = Util.safe_list_access(command_parameters, 10)
 
         if host_service is None or host_service not in ["Host","Service"]:
-            return self.usage(update=update)
+            return self.usage()
 
         if comment is None or comment == "":
-            return self.usage(DowntimeHandler.MESSAGE_COMMENT_MISSING,update=update)
+            return self.usage(DowntimeHandler.MESSAGE_COMMENT_MISSING)
 
         if start_time is None or start_time == "":
-            return self.usage(DowntimeHandler.MESSAGE_START_TIME_MISSING,update=update)
+            return self.usage(DowntimeHandler.MESSAGE_START_TIME_MISSING)
 
         if end_time is None or end_time == "":
-            return self.usage(DowntimeHandler.MESSAGE_END_TIME_MISSING,update=update)
+            return self.usage(DowntimeHandler.MESSAGE_END_TIME_MISSING)
 
         start_time = dateparser.parse(start_time)
         end_time = dateparser.parse(end_time)
 
         if start_time is None:
-            return self.usage(DowntimeHandler.MESSAGE_START_TIME_INVALID,update=update)
+            return self.usage(DowntimeHandler.MESSAGE_START_TIME_INVALID)
 
         if end_time is None:
-            return self.usage(DowntimeHandler.MESSAGE_END_TIME_INVALID,update=update)
+            return self.usage(DowntimeHandler.MESSAGE_END_TIME_INVALID)
 
         if fixed is None or fixed == "":
             fixed = True
@@ -92,12 +92,12 @@ class DowntimeHandler(Icinga2TelegramBotHandler):
             fixed = False
 
         if (duration is None or duration == "") and fixed == False:
-            return self.usage(DowntimeHandler.MESSAGE_DURATION_MANDATORY_FOR_FLEXIBLE,update=update)
+            return self.usage(DowntimeHandler.MESSAGE_DURATION_MANDATORY_FOR_FLEXIBLE)
 
         if start_time > end_time:
-            return self.usage(DowntimeHandler.MESSAGE_TIME_SWAPPED,update=update)
+            return self.usage(DowntimeHandler.MESSAGE_TIME_SWAPPED)
 
-        self.schedule_downtime(update,host_service,hostname,servicename,comment,int(start_time.timestamp()),int(end_time.timestamp()),duration,fixed,all_services,trigger_name,child_options)
+        return self.schedule_downtime(update,host_service,hostname,servicename,comment,int(start_time.timestamp()),int(end_time.timestamp()),duration,fixed,all_services,trigger_name,child_options)
 
     def schedule_downtime(self, update, host_service,hostname,servicename,comment,start_time,end_time,duration,fixed,all_services,trigger_name,child_options):
         result = ""
@@ -114,4 +114,4 @@ class DowntimeHandler(Icinga2TelegramBotHandler):
                                                                duration, None, fixed, all_services, trigger_name,
                                                                child_options)
 
-        update.message.reply_text(ResultPrinter.printResultsFromResponse(result))
+        return ResultPrinter.printResultsFromResponse(result)
